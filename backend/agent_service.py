@@ -34,7 +34,7 @@ def _get_agent():
                   ```chart
                   {"type": "bar", "x_label": "客户", "y_label": "消费金额", "data": [{"x": "Helena Holý", "y": 49.62}, {"x": "Richard", "y": 47.62}]}
                   ```
-                  data 取前 10 条即可（超过 10 条截断）
+                  data 取前 20 条即可（超过 20 条截断）
                   type 默认 bar；时间序列（按日期分组）用 line；占比类用 pie
                 - 非聚合查询（如"有哪些表"、查单值）不追加
                 - chart 块必须在回答最末尾，和正文之间不留空行之外的任何内容
