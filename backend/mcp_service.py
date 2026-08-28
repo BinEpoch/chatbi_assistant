@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
 from db_parser import DBParser
 from typing import Annotated
+from langgraph.types import Interrupt
 
 # from fastmcp import FastMCP + from db_parser import DBParser
 # 建一个全局 parser = DBParser("sqlite:///chinook.db")
@@ -36,7 +37,7 @@ def get_table_sample(table_name: Annotated[str, "要查询的表名称"], limit:
     return parser.get_table_sample(table_name,limit)
 
 @mcp.tool
-def execute_sql(sql: Annotated[str,"要执行的sql语句"]) -> str:
+def execute_sql(sql: Annotated[str,"要执行的sql语句"]) -> dict:
     """执行SQL语句，得到查询的结果"""
     return parser.execute_sql(sql)
 

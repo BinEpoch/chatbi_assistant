@@ -2,6 +2,7 @@ from fastmcp import Client
 from langchain.tools import tool
 from typing import Annotated
 import asyncio
+from langgraph.types import interrupt
 
 MCP_URL = "http://localhost:8000/mcp"
 
@@ -33,7 +34,7 @@ async def get_table_sample(table_name: Annotated[str, "表名称"], limit: Annot
     return str(result.data)
 
 @tool
-async def execute_sql(sql: Annotated[str, "要执行的sql语句"]) -> str:
+async def execute_sql(sql: Annotated[str, "要执行的sql语句"]) -> dict:
     """
     执行SQL查询语句并返回结果。
     什么时候调：当你已经用 list_tables 看了表名、describe_table 看了字段后，根据用户问题生成SQL并执行。
@@ -45,9 +46,12 @@ async def execute_sql(sql: Annotated[str, "要执行的sql语句"]) -> str:
     参数：
     sql: 要执行的SQL语句
     """
+    user_decision = interrupt({"sql": sql})
+    if user_decision != "yes":
+        return "用户拒绝执行 SQL"
     async with Client(MCP_URL) as client:
         result =await client.call_tool("execute_sql", {"sql": sql})
-    return str(result.data)
+    return result.data
 
 
 

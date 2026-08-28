@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine, inspect, text
 import pandas as pd
 import os
+import sqlglot
+from sqlglot import exp
+
 
 class DBParser:
     def __init__(self, db_url):
@@ -48,16 +51,40 @@ class DBParser:
                 result.append(item)
         return result
 
+    def _validate_sql_ast(self, sql: str) -> tuple[bool, str]:
+        """用 sqlglot AST 校验 SQL 是否只读"""
+        try:
+            expressions = sqlglot.parse(sql)
+        except Exception as e:
+            return False, f"SQL 语法错误{e}"
+        if not expressions:
+            return False, f"空 SQL"
+        for expr in expressions:
+            if expr is None:
+                return False, f"SQL 解析失败,可能是语法错误"
+            for node in expr.find_all((exp.Delete, exp.Update, exp.Drop, exp.Insert, exp.Alter, exp.Create)):
+                return False, f"检测到破坏性操作: {type(node).__name__}"
+        return True, f"SQL 合法"
+
+
+
     def execute_sql(self, sql: str):
+        """执行查询sql语句"""
+        # 第一层:AST 校验(新增)
+        flag, msg = self._validate_sql_ast(sql)
+        if not flag:
+            return msg
+        # 第二层:字符串白名单(保留,两层防御)
         if not sql.strip().upper().startswith("SELECT") and not sql.strip().upper().startswith("WITH"):
             return f"sql{sql}语句不合法，支持查询语句"
         if sql.strip().rstrip(";").count(";") > 0:
             return f"sql:{sql}语句不合法,只支持单条查询"
         else:
+            # 第三层:执行
             with self.engine.connect() as conn:
                 df = pd.read_sql(text(sql), conn)
-            return df.to_markdown(index=False)
-
+            # return df.to_markdown(index=False)
+            return {"columns": df.columns.tolist(), "rows": df.values.tolist()}
 
 if __name__ == '__main__':
     DB_URL = "sqlite:////Users/bin/Downloads/ai/test_demo/projects/chatbi_assistant/data/chinook.db"
@@ -66,3 +93,9 @@ if __name__ == '__main__':
     print(parser.get_table_fields("invoices"))  # DataFrame
     print(parser.get_table_sample("invoices"))  # DataFrame
     print(parser.get_data_relations())  # list[dict]
+    print(parser.execute_sql("SELECT * FROM customers LIMIT 1"))
+    # 测破坏性 SQL
+    print(parser.execute_sql("DELETE FROM customers"))
+    print(parser.execute_sql("DROP TABLE customers"))
+    print(parser.execute_sql("SELECT * FROM customers; DROP TABLE customers;"))
+    print(parser.execute_sql(""))
