@@ -1,0 +1,39 @@
+services:
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatbi-mcp
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: chatbi-api
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - MCP_URL=http://mcp:8000/mcp
+    depends_on:
+      - mcp
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: chatbi-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8090
+    depends_on:
+      - api
+    restart: unless-stopped

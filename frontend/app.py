@@ -8,9 +8,10 @@ import requests
 import json
 import re
 import pandas as pd
+import os
 
 
-API_URL = "http://localhost:8090"
+API_URL = os.getenv("API_URL", "http://localhost:8090")
 HEADERS = {"X-API-Key": "sk-chatbi-dev-123456"}
 
 import streamlit as st

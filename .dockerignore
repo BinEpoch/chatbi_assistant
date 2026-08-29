@@ -11,3 +11,4 @@ backend/
 !backend/api.py
 !backend/agent_service.py
 !backend/tools.py
+!frontend/app.py
