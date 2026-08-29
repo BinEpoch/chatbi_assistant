@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.idea/
+.git/
+data/
+frontend/
+backend/
+logs/
+backend/
+!backend/db_parser.py
+!backend/mcp_service.py

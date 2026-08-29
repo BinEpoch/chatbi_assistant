@@ -19,7 +19,7 @@ mcp = FastMCP(
     instructions="chinook数据库相关集成mcp平台，提供查表、字段结果、查询sql语句、查表实例的工具"
 )
 
-parser = DBParser("sqlite:////Users/bin/Downloads/ai/test_demo/projects/chatbi_assistant/data/chinook.db")
+parser = DBParser("sqlite:///data/chinook.db")
 
 @mcp.tool
 def get_table_names() -> list:
@@ -44,5 +44,5 @@ def execute_sql(sql: Annotated[str,"要执行的sql语句"]) -> dict:
 
 
 if __name__ == '__main__':
-    mcp.run(transport="http", port=8000)
+    mcp.run(transport="http", host="0.0.0.0", port=8000)
 
