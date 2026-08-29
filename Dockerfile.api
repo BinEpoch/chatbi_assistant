@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements-api.txt .
+ENV PIP_INDEX_URL=https://pypi.sankuai.com/simple
+RUN pip install -r requirements-api.txt --no-cache-dir --retries 10
+RUN pip install --no-cache-dir langgraph-checkpoint-sqlite==3.1.1 -i https://pypi.org/simple
+RUN pip install --no-cache-dir "fastmcp==3.4.4" -i https://pypi.org/simple
+COPY backend/api.py backend/agent_service.py backend/tools.py ./
+EXPOSE 8090
+CMD ["python", "api.py"]

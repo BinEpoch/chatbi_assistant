@@ -4,8 +4,10 @@ __pycache__/
 .git/
 data/
 frontend/
-backend/
 logs/
 backend/
 !backend/db_parser.py
 !backend/mcp_service.py
+!backend/api.py
+!backend/agent_service.py
+!backend/tools.py

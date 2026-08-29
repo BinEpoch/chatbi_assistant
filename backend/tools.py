@@ -1,10 +1,12 @@
+import os
+
 from fastmcp import Client
 from langchain.tools import tool
 from typing import Annotated
 import asyncio
 from langgraph.types import interrupt
 
-MCP_URL = "http://localhost:8000/mcp"
+MCP_URL = os.getenv("MCP_URL", "http://localhost:8000/mcp")
 
 @tool
 async def list_tables() -> str:
@@ -30,7 +32,7 @@ async def get_table_sample(table_name: Annotated[str, "表名称"], limit: Annot
     查询指标表的示例数据，需要进一步探查表真实数据，调用该工具
     """
     async with Client(MCP_URL) as client:
-        result =await client.call_tool("get_table_sample",{"table_name": table_name, "limit": limit})
+        result =await client.call_tool("get_table_sample", {"table_name": table_name, "limit": limit})
     return str(result.data)
 
 @tool

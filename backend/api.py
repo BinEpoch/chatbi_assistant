@@ -32,7 +32,7 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 启动时创建 checkpointer
-    async with aiosqlite.connect("/Users/bin/Downloads/ai/test_demo/projects/chatbi_assistant/data/checkpoints.db") as conn:
+    async with aiosqlite.connect("data/checkpoints.db") as conn:
         app.state.checkpointer = AsyncSqliteSaver(conn=conn)
         await app.state.checkpointer.setup()
         yield
