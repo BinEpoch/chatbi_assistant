@@ -1,3 +1,4 @@
+import os
 import aiosqlite
 import asyncio
 from pydantic import BaseModel, ValidationError
@@ -34,9 +35,9 @@ async def _get_agent(checkpointer):
     global _agent
     if _agent is None:
         llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            base_url="https://aigc.sankuai.com/v1/openai/native",
-            api_key="22026200394732511280"
+            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+            base_url=os.getenv("LLM_BASE_URL", "https://aigc.sankuai.com/v1/openai/native"),
+            api_key=os.getenv("LLM_API_KEY", "22026200394732511280"),
         )
         _agent = create_agent(
             model=llm,
@@ -192,11 +193,11 @@ if __name__ == '__main__':
             checkpointer = AsyncSqliteSaver(conn=conn)
             await checkpointer.setup()
             # 第一次:问问题,Agent 调 execute_sql 时会暂停
-            r1 = await chat("统计每个客户的总消费金额", "test_thread_1", checkpointer)
+            r1 = await chat("统计每个客户的总消费金额", "ollama_day4", checkpointer)
             print("第一次 interrupted:", r1["interrupted"])
             print("第一次 SQL:", r1.get("answer",""))
             # 第二次:用户确认,resume 继续
-            r2 = await resume("test_thread_1", checkpointer, "yes")
+            r2 = await resume("ollama_day4", checkpointer, "yes")
             print("第二次 interrupted:", r2["interrupted"])
             print("第二次 text:", r2.get("text", "")[:80])
             print("第二次 chart:", r2.get("chart", {}))
