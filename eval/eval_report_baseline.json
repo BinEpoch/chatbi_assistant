@@ -1,0 +1,313 @@
+{
+  "metrics": {
+    "total": 30,
+    "valid": 30,
+    "exec_acc": 26,
+    "exec_acc_rate": 0.8667,
+    "safety_blocked": 8,
+    "safety_total": 8,
+    "model": "gpt-4o-mini"
+  },
+  "details": [
+    {
+      "id": 1,
+      "difficulty": "easy",
+      "question": "数据库里一共有多少位客户？",
+      "golden_sql": "SELECT COUNT(*) FROM customers",
+      "generated_sql": "SELECT COUNT(*) AS CustomerCount FROM customers;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 2,
+      "difficulty": "easy",
+      "question": "有多少个国家有客户？",
+      "golden_sql": "SELECT COUNT(DISTINCT Country) FROM customers",
+      "generated_sql": "SELECT COUNT(DISTINCT Country) AS CountryCount FROM customers;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 3,
+      "difficulty": "easy",
+      "question": "总共有多少首歌曲？",
+      "golden_sql": "SELECT COUNT(*) FROM tracks",
+      "generated_sql": "SELECT COUNT(*) AS TotalTracks FROM tracks;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 4,
+      "difficulty": "easy",
+      "question": "最贵的单曲单价是多少？",
+      "golden_sql": "SELECT MAX(UnitPrice) FROM tracks",
+      "generated_sql": "SELECT MAX(UnitPrice) AS MaxPrice FROM tracks;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 5,
+      "difficulty": "easy",
+      "question": "所有订单的总金额是多少？",
+      "golden_sql": "SELECT SUM(Total) FROM invoices",
+      "generated_sql": "SELECT SUM(Total) AS TotalAmount FROM invoices;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 6,
+      "difficulty": "medium",
+      "question": "每个国家的客户人数分别是多少？按人数从高到低排序",
+      "golden_sql": "SELECT Country, COUNT(*) AS cnt FROM customers GROUP BY Country ORDER BY cnt DESC",
+      "generated_sql": "SELECT Country, COUNT(CustomerId) AS CustomerCount FROM customers GROUP BY Country ORDER BY CustomerCount DESC",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 7,
+      "difficulty": "medium",
+      "question": "消费总金额最高的前5位客户是谁？他们各消费了多少？",
+      "golden_sql": "SELECT c.FirstName, c.LastName, SUM(i.Total) AS total FROM customers c JOIN invoices i ON i.CustomerId = c.CustomerId GROUP BY c.CustomerId ORDER BY total DESC LIMIT 5",
+      "generated_sql": "SELECT c.FirstName, c.LastName, SUM(i.Total) AS TotalSpent\nFROM customers c\nJOIN invoices i ON c.CustomerId = i.CustomerId\nGROUP BY c.CustomerId\nORDER BY TotalSpent DESC\nLIMIT 5;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 8,
+      "difficulty": "medium",
+      "question": "2010年每个月的订单总金额是多少？按月份升序输出",
+      "golden_sql": "SELECT strftime('%m', InvoiceDate) AS month, SUM(Total) AS total FROM invoices WHERE strftime('%Y', InvoiceDate) = '2010' GROUP BY month ORDER BY month",
+      "generated_sql": "SELECT strftime('%Y-%m', InvoiceDate) AS Month, SUM(Total) AS TotalAmount\nFROM invoices\nWHERE strftime('%Y', InvoiceDate) = '2010'\nGROUP BY Month\nORDER BY Month ASC;",
+      "valid": true,
+      "match": false,
+      "reason": "结果不一致"
+    },
+    {
+      "id": 9,
+      "difficulty": "medium",
+      "question": "哪个流派的曲目数量最多？有多少首？",
+      "golden_sql": "SELECT g.Name, COUNT(*) AS cnt FROM tracks t JOIN genres g ON t.GenreId = g.GenreId GROUP BY g.GenreId ORDER BY cnt DESC LIMIT 1",
+      "generated_sql": "SELECT g.Name AS Genre, COUNT(t.TrackId) AS TrackCount \nFROM genres g \nJOIN tracks t ON g.GenreId = t.GenreId \nGROUP BY g.GenreId \nORDER BY TrackCount DESC \nLIMIT 1;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 10,
+      "difficulty": "medium",
+      "question": "每种媒体类型有多少首曲目？",
+      "golden_sql": "SELECT m.Name, COUNT(*) AS cnt FROM tracks t JOIN media_types m ON t.MediaTypeId = m.MediaTypeId GROUP BY m.MediaTypeId",
+      "generated_sql": "SELECT mt.Name AS MediaType, COUNT(t.TrackId) AS TrackCount\nFROM media_types mt\nLEFT JOIN tracks t ON mt.MediaTypeId = t.MediaTypeId\nGROUP BY mt.MediaTypeId;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 11,
+      "difficulty": "medium",
+      "question": "从未下过订单的客户有几位？",
+      "golden_sql": "SELECT COUNT(*) FROM customers c LEFT JOIN invoices i ON i.CustomerId = c.CustomerId WHERE i.InvoiceId IS NULL",
+      "generated_sql": "SELECT COUNT(*) AS UnorderedCustomers FROM customers WHERE CustomerId NOT IN (SELECT DISTINCT CustomerId FROM invoices);",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 12,
+      "difficulty": "medium",
+      "question": "从未下过订单的客户都来自哪些国家？",
+      "golden_sql": "SELECT DISTINCT c.Country FROM customers c LEFT JOIN invoices i ON i.CustomerId = c.CustomerId WHERE i.InvoiceId IS NULL",
+      "generated_sql": "SELECT DISTINCT Country FROM customers WHERE CustomerId NOT IN (SELECT CustomerId FROM invoices);",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 13,
+      "difficulty": "easy",
+      "question": "单笔订单金额最高是多少？",
+      "golden_sql": "SELECT MAX(Total) FROM invoices",
+      "generated_sql": "SELECT MAX(Total) AS MaxOrderAmount FROM invoices;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 14,
+      "difficulty": "medium",
+      "question": "每位客户的下单次数和消费总金额分别是多少？",
+      "golden_sql": "SELECT CustomerId, COUNT(*) AS order_cnt, SUM(Total) AS total FROM invoices GROUP BY CustomerId",
+      "generated_sql": "SELECT c.CustomerId, COUNT(i.InvoiceId) AS OrderCount, SUM(i.Total) AS TotalSpent\nFROM customers c\nLEFT JOIN invoices i ON c.CustomerId = i.CustomerId\nGROUP BY c.CustomerId;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 15,
+      "difficulty": "medium",
+      "question": "平均每张订单包含多少条订单明细？",
+      "golden_sql": "SELECT AVG(cnt) FROM (SELECT COUNT(*) AS cnt FROM invoice_items GROUP BY InvoiceId)",
+      "generated_sql": "SELECT AVG(ItemCount) AS AverageItemsPerInvoice FROM (SELECT COUNT(*) AS ItemCount FROM invoice_items GROUP BY InvoiceId);",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 16,
+      "difficulty": "hard",
+      "question": "销售额最高的前5首歌曲是哪些？各自的销售额是多少？",
+      "golden_sql": "SELECT t.Name, SUM(ii.UnitPrice * ii.Quantity) AS sales FROM invoice_items ii JOIN tracks t ON t.TrackId = ii.TrackId GROUP BY t.TrackId ORDER BY sales DESC LIMIT 5",
+      "generated_sql": "SELECT t.Name, SUM(ii.UnitPrice * ii.Quantity) AS TotalSales\nFROM tracks t\nJOIN invoice_items ii ON t.TrackId = ii.TrackId\nGROUP BY t.TrackId\nORDER BY TotalSales DESC\nLIMIT 5;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 17,
+      "difficulty": "hard",
+      "question": "销售额最高的前3位艺术家是谁？销售额是多少？",
+      "golden_sql": "SELECT ar.Name, SUM(ii.UnitPrice * ii.Quantity) AS sales FROM invoice_items ii JOIN tracks t ON ii.TrackId = t.TrackId JOIN albums al ON t.AlbumId = al.AlbumId JOIN artists ar ON al.ArtistId = ar.ArtistId GROUP BY ar.ArtistId ORDER BY sales DESC LIMIT 3",
+      "generated_sql": "SELECT a.ArtistId, ar.Name, SUM(i.Total) AS TotalSales\nFROM albums a\nJOIN artists ar ON a.ArtistId = ar.ArtistId\nJOIN tracks t ON a.AlbumId = t.AlbumId\nJOIN invoice_items ii ON t.TrackId = ii.TrackId\nJOIN invoices i ON ii.InvoiceId = i.InvoiceId\nGROUP BY a.ArtistId, ar.Name\nORDER BY TotalSales DESC\nLIMIT 3;",
+      "valid": true,
+      "match": false,
+      "reason": "结果不一致"
+    },
+    {
+      "id": 18,
+      "difficulty": "medium",
+      "question": "美国客户的总消费金额是多少？",
+      "golden_sql": "SELECT SUM(i.Total) FROM invoices i JOIN customers c ON c.CustomerId = i.CustomerId WHERE c.Country = 'USA'",
+      "generated_sql": "SELECT SUM(Total) AS TotalSpent FROM invoices WHERE CustomerId IN (SELECT CustomerId FROM customers WHERE Country = 'USA');",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 19,
+      "difficulty": "hard",
+      "question": "消费总额排名前5的国家的客户消费总额分别是多少？",
+      "golden_sql": "SELECT c.Country, SUM(i.Total) AS total FROM invoices i JOIN customers c ON c.CustomerId = i.CustomerId GROUP BY c.Country ORDER BY total DESC LIMIT 5",
+      "generated_sql": "SELECT c.Country, SUM(i.Total) AS TotalSpent\nFROM customers c\nJOIN invoices i ON c.CustomerId = i.CustomerId\nGROUP BY c.Country\nORDER BY TotalSpent DESC\nLIMIT 5;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 20,
+      "difficulty": "medium",
+      "question": "哪个开票城市的订单数量最多？有多少单？",
+      "golden_sql": "SELECT BillingCity, COUNT(*) AS cnt FROM invoices GROUP BY BillingCity ORDER BY cnt DESC LIMIT 1",
+      "generated_sql": "SELECT BillingCity, COUNT(*) AS OrderCount \nFROM invoices \nGROUP BY BillingCity \nORDER BY OrderCount DESC \nLIMIT 1;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 21,
+      "difficulty": "easy",
+      "question": "有多少位客户登记了公司信息（Company 字段非空）？",
+      "golden_sql": "SELECT COUNT(*) FROM customers WHERE Company IS NOT NULL",
+      "generated_sql": "SELECT COUNT(*) AS CustomerCount FROM customers WHERE Company IS NOT NULL;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 22,
+      "difficulty": "hard",
+      "question": "哪位员工负责支持的客户数量最多？带了多少位客户？",
+      "golden_sql": "SELECT e.FirstName, e.LastName, COUNT(*) AS cnt FROM customers c JOIN employees e ON e.EmployeeId = c.SupportRepId GROUP BY e.EmployeeId ORDER BY cnt DESC LIMIT 1",
+      "generated_sql": "SELECT e.FirstName, e.LastName, COUNT(c.CustomerId) AS CustomerCount\nFROM employees e\nLEFT JOIN customers c ON e.EmployeeId = c.SupportRepId\nGROUP BY e.EmployeeId\nORDER BY CustomerCount DESC\nLIMIT 1;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 23,
+      "difficulty": "medium",
+      "question": "每位有下属的员工分别有多少个直接下属？",
+      "golden_sql": "SELECT ReportsTo, COUNT(*) AS cnt FROM employees WHERE ReportsTo IS NOT NULL GROUP BY ReportsTo",
+      "generated_sql": "SELECT e.EmployeeId, e.FirstName, e.LastName, COUNT(e2.EmployeeId) AS DirectReports\nFROM employees e\nLEFT JOIN employees e2 ON e.EmployeeId = e2.ReportsTo\nWHERE e.ReportsTo IS NOT NULL\nGROUP BY e.EmployeeId, e.FirstName, e.LastName;",
+      "valid": true,
+      "match": false,
+      "reason": "结果不一致"
+    },
+    {
+      "id": 24,
+      "difficulty": "easy",
+      "question": "时长超过5分钟（300000毫秒）的曲目有多少首？",
+      "golden_sql": "SELECT COUNT(*) FROM tracks WHERE Milliseconds > 300000",
+      "generated_sql": "SELECT COUNT(*) AS TrackCount FROM tracks WHERE Milliseconds > 300000;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 25,
+      "difficulty": "medium",
+      "question": "曲目数量最多的前5张专辑是哪些？各有多少首曲目？",
+      "golden_sql": "SELECT al.Title, COUNT(*) AS cnt FROM tracks t JOIN albums al ON t.AlbumId = al.AlbumId GROUP BY al.AlbumId ORDER BY cnt DESC LIMIT 5",
+      "generated_sql": "SELECT a.Title, COUNT(t.TrackId) AS TrackCount\nFROM albums a\nJOIN tracks t ON a.AlbumId = t.AlbumId\nGROUP BY a.AlbumId\nORDER BY TrackCount DESC\nLIMIT 5;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 26,
+      "difficulty": "hard",
+      "question": "没有任何专辑的艺术家有几位？",
+      "golden_sql": "SELECT COUNT(*) FROM artists ar LEFT JOIN albums al ON al.ArtistId = ar.ArtistId WHERE al.AlbumId IS NULL",
+      "generated_sql": "SELECT COUNT(*) AS ArtistCount \nFROM artists \nWHERE ArtistId NOT IN (SELECT DISTINCT ArtistId FROM albums);",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 27,
+      "difficulty": "hard",
+      "question": "2011年消费金额最高的客户是哪位？消费了多少？",
+      "golden_sql": "SELECT c.FirstName, c.LastName, SUM(i.Total) AS total FROM invoices i JOIN customers c ON c.CustomerId = i.CustomerId WHERE strftime('%Y', i.InvoiceDate) = '2011' GROUP BY c.CustomerId ORDER BY total DESC LIMIT 1",
+      "generated_sql": "SELECT c.FirstName, c.LastName, SUM(i.Total) AS TotalSpent\nFROM customers c\nJOIN invoices i ON c.CustomerId = i.CustomerId\nWHERE strftime('%Y', i.InvoiceDate) = '2011'\nGROUP BY c.CustomerId\nORDER BY TotalSpent DESC\nLIMIT 1;",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 28,
+      "difficulty": "hard",
+      "question": "销售总额排名前3的流派是哪些？销售额分别是多少？",
+      "golden_sql": "SELECT g.Name, SUM(ii.UnitPrice * ii.Quantity) AS sales FROM invoice_items ii JOIN tracks t ON ii.TrackId = t.TrackId JOIN genres g ON t.GenreId = g.GenreId GROUP BY g.GenreId ORDER BY sales DESC LIMIT 3",
+      "generated_sql": "SELECT g.Name AS Genre, SUM(i.Total) AS TotalSales\nFROM genres g\nJOIN tracks t ON g.GenreId = t.GenreId\nJOIN invoice_items ii ON t.TrackId = ii.TrackId\nJOIN invoices i ON ii.InvoiceId = i.InvoiceId\nGROUP BY g.GenreId\nORDER BY TotalSales DESC\nLIMIT 3;",
+      "valid": true,
+      "match": false,
+      "reason": "结果不一致"
+    },
+    {
+      "id": 29,
+      "difficulty": "easy",
+      "question": "歌名里包含 Love 的歌曲有多少首？",
+      "golden_sql": "SELECT COUNT(*) FROM tracks WHERE Name LIKE '%Love%'",
+      "generated_sql": "SELECT COUNT(*) AS LoveSongCount FROM tracks WHERE Name LIKE '%Love%';",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    },
+    {
+      "id": 30,
+      "difficulty": "medium",
+      "question": "德国客户的订单总数是多少？",
+      "golden_sql": "SELECT COUNT(*) FROM invoices i JOIN customers c ON c.CustomerId = i.CustomerId WHERE c.Country = 'Germany'",
+      "generated_sql": "SELECT COUNT(*) AS TotalOrders FROM invoices WHERE CustomerId IN (SELECT CustomerId FROM customers WHERE Country = 'Germany');",
+      "valid": true,
+      "match": true,
+      "reason": "ok"
+    }
+  ]
+}

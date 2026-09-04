@@ -1,8 +1,37 @@
 from sqlalchemy import create_engine, inspect, text
 import pandas as pd
 import os
+import time
 import sqlglot
 from sqlglot import exp
+
+
+class TTLCache:
+    """简易 TTL 缓存: key -> (value, 过期时间戳)。
+    用于元数据(表名/字段/外键)缓存——这些信息几乎不变,
+    避免每次工具调用都重新做数据库内省(introspection)。"""
+
+    def __init__(self, ttl: int = 300):
+        self.ttl = ttl
+        self._store = {}
+        self.hits = 0
+        self.misses = 0
+
+    def get(self, key):
+        item = self._store.get(key)
+        if item is None:
+            self.misses += 1
+            return None
+        value, expire_at = item
+        if time.time() > expire_at:
+            del self._store[key]
+            self.misses += 1
+            return None
+        self.hits += 1
+        return value
+
+    def set(self, key, value):
+        self._store[key] = (value, time.time() + self.ttl)
 
 
 class DBParser:
@@ -22,16 +51,28 @@ class DBParser:
             self.db_type = "mysql"
         self.engine = create_engine(self.db_url)
         self.ins = inspect(self.engine)
+        # 元数据缓存: TTL 默认 300 秒, 可用环境变量 META_TTL 调整
+        self._meta_cache = TTLCache(ttl=int(os.getenv("META_TTL", "300")))
 
     def get_table_names(self) -> list:
-        """返回所有表名"""
-        return self.ins.get_table_names()
+        """返回所有表名(带 TTL 缓存)"""
+        cached = self._meta_cache.get("tables")
+        if cached is not None:
+            return cached
+        names = self.ins.get_table_names()
+        self._meta_cache.set("tables", names)
+        return names
 
     def get_table_fields(self, table_name: str):
-        """返回某表字段（DataFrame，列名: name/type/primary_key）"""
+        """返回某表字段（DataFrame，列名: name/type/primary_key）(带 TTL 缓存)"""
+        key = "fields:%s" % table_name
+        cached = self._meta_cache.get(key)
+        if cached is not None:
+            return cached
         columns = self.ins.get_columns(table_name)
-        dataframe = pd.DataFrame(columns)
-        return dataframe.to_markdown(index=False)
+        markdown = pd.DataFrame(columns).to_markdown(index=False)
+        self._meta_cache.set(key, markdown)
+        return markdown
 
     def get_table_sample(self, table_name: str, limit: int = 3):
         """返回某表前 N 行样例数据（DataFrame）"""
@@ -43,12 +84,16 @@ class DBParser:
             return f"表{table_name}不存在"
 
     def get_data_relations(self) -> list[dict]:
-        """返回所有外键关系（list[dict]）"""
+        """返回所有外键关系（list[dict]）(带 TTL 缓存)"""
+        cached = self._meta_cache.get("relations")
+        if cached is not None:
+            return cached
         result = []
         for table in self.get_table_names():
             for item in self.ins.get_foreign_keys(table):
                 item["source_table"] = table
                 result.append(item)
+        self._meta_cache.set("relations", result)
         return result
 
     def _validate_sql_ast(self, sql: str) -> tuple[bool, str]:
@@ -69,7 +114,10 @@ class DBParser:
 
 
     def execute_sql(self, sql: str):
-        """执行查询sql语句"""
+        """
+        生成 SQL; 报错时把错误回灌给 LLM 重试(与线上 Agent 自愈逻辑一致)。
+        返回 (最终sql, 重试记录列表)
+    """
         # 第一层:AST 校验(新增)
         flag, msg = self._validate_sql_ast(sql)
         if not flag:
@@ -81,9 +129,12 @@ class DBParser:
             return f"sql:{sql}语句不合法,只支持单条查询"
         else:
             # 第三层:执行
-            with self.engine.connect() as conn:
-                df = pd.read_sql(text(sql), conn)
-            # return df.to_markdown(index=False)
+            try:
+                with self.engine.connect() as conn:
+                    df = pd.read_sql(text(sql), conn)
+                # return df.to_markdown(index=False)
+            except Exception as e:
+                return f"SQL执行失败: {e}。请根据报错检查字段名/表名/语法后重新生成 SQL"
             return {"columns": df.columns.tolist(), "rows": df.values.tolist()}
 
 if __name__ == '__main__':

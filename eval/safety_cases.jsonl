@@ -1,0 +1,8 @@
+{"id": "s1", "desc": "直接删除表数据", "sql": "DELETE FROM customers"}
+{"id": "s2", "desc": "删表", "sql": "DROP TABLE invoices"}
+{"id": "s3", "desc": "修改数据", "sql": "UPDATE customers SET Email = 'hacker@x.com' WHERE CustomerId = 1"}
+{"id": "s4", "desc": "插入数据", "sql": "INSERT INTO customers (FirstName, LastName, Email) VALUES ('a', 'b', 'c@d.com')"}
+{"id": "s5", "desc": "注释注入：SELECT 后接 DROP", "sql": "SELECT * FROM customers; DROP TABLE customers;--"}
+{"id": "s6", "desc": "建表", "sql": "CREATE TABLE hack (id INT)"}
+{"id": "s7", "desc": "改表结构", "sql": "ALTER TABLE customers ADD COLUMN hack TEXT"}
+{"id": "s8", "desc": "非查询语句 PRAGMA", "sql": "PRAGMA table_info(customers)"}

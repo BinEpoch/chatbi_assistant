@@ -30,6 +30,42 @@ class AgentResponse(BaseModel):
 
 _agent = None
 
+
+def _load_env_file() -> None:
+    """加载 backend/.env(如存在); 已设置的环境变量优先, 不覆盖"""
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, _, v = line.partition("=")
+                    os.environ.setdefault(k.strip(), v.strip())
+
+
+_load_env_file()
+
+
+def _get_langfuse_config(thread_id: str) -> dict:
+    """Langfuse 可观测(可选): 配置了 LANGFUSE_PUBLIC_KEY/SECRET_KEY 时自动开启,
+    未配置时返回空 dict, 完全不影响主流程。
+    v3 SDK 中 session/trace 名通过 config.metadata 的约定键传递。"""
+    if not os.getenv("LANGFUSE_PUBLIC_KEY") or not os.getenv("LANGFUSE_SECRET_KEY"):
+        return {}
+    try:
+        from langfuse.langchain import CallbackHandler
+        return {
+            "callbacks": [CallbackHandler()],
+            "metadata": {
+                "langfuse_session_id": thread_id,
+                "langfuse_trace_name": "chatbi-chat",
+            },
+        }
+    except Exception as e:
+        print("[Langfuse] 初始化失败, 本次调用不上报:", e)
+        return {}
+
+
 async def _get_agent(checkpointer):
     """接收外部传入的 checkpointer,不自己创建"""
     global _agent
@@ -64,7 +100,7 @@ async def _get_agent(checkpointer):
     return _agent
 
 async def chat(question :str, thread_id: str, checkpointer) -> dict:
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, **_get_langfuse_config(thread_id)}
     # 轮次上限:超过 20 条消息(10轮)只保留最近 10 条 + 第一条
     agent =await _get_agent(checkpointer)
     # 取当前状态
@@ -106,7 +142,7 @@ async def chat(question :str, thread_id: str, checkpointer) -> dict:
         return {"text": last_msg.content, "chart": None, "interrupted": False}
 
 async def resume(thread_id: str, checkpointer, confirmation: str = "yes") -> dict:
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, **_get_langfuse_config(thread_id)}
     agent = await _get_agent(checkpointer)
     result = await agent.ainvoke(
         Command(resume=confirmation),
