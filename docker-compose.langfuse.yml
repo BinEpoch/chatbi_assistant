@@ -57,6 +57,8 @@ services:
       REDIS_AUTH: chatbiredis
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      # 允许 LLM 连接使用内网网关域名(绕过 SSRF 内网 IP 拦截)
+      LANGFUSE_LLM_CONNECTION_WHITELISTED_HOST: "aigc.sankuai.com,host.docker.internal"
 
   langfuse-worker:
     image: langfuse/langfuse-worker:3

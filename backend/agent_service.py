@@ -148,6 +148,14 @@ async def resume(thread_id: str, checkpointer, confirmation: str = "yes") -> dic
         Command(resume=confirmation),
         config
     )
+    # 自愈重试会再次触发 execute_sql 的 interrupt:
+    # 若图再次挂起,返回新 SQL 让前端再次确认(与 chat() 的中断处理保持一致)
+    state = await agent.aget_state(config)
+    if state and state.next:
+        messages = state.values.get("messages", [])
+        if messages and getattr(messages[-1], "tool_calls", None):
+            sql = messages[-1].tool_calls[0].get("args", {}).get("sql", "")
+            return {"answer": sql, "interrupted": True}
     last_msg = result["messages"][-1]
     try:
         response = AgentResponse.model_validate_json(last_msg.content)

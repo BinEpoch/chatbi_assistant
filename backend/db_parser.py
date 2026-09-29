@@ -121,12 +121,13 @@ class DBParser:
         # 第一层:AST 校验(新增)
         flag, msg = self._validate_sql_ast(sql)
         if not flag:
-            return msg
+            # 必须返回 dict: mcp_service 声明了 -> dict,返回 str 会触发 FastMCP ToolError 导致整次调用 500
+            return {"error": msg}
         # 第二层:字符串白名单(保留,两层防御)
         if not sql.strip().upper().startswith("SELECT") and not sql.strip().upper().startswith("WITH"):
-            return f"sql{sql}语句不合法，支持查询语句"
+            return {"error": f"sql{sql}语句不合法，支持查询语句"}
         if sql.strip().rstrip(";").count(";") > 0:
-            return f"sql:{sql}语句不合法,只支持单条查询"
+            return {"error": f"sql:{sql}语句不合法,只支持单条查询"}
         else:
             # 第三层:执行
             try:
@@ -134,7 +135,7 @@ class DBParser:
                     df = pd.read_sql(text(sql), conn)
                 # return df.to_markdown(index=False)
             except Exception as e:
-                return f"SQL执行失败: {e}。请根据报错检查字段名/表名/语法后重新生成 SQL"
+                return {"error": f"SQL执行失败: {e}。请根据报错检查字段名/表名/语法后重新生成 SQL"}
             return {"columns": df.columns.tolist(), "rows": df.values.tolist()}
 
 if __name__ == '__main__':

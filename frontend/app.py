@@ -62,9 +62,13 @@ if st.session_state.awaiting_confirmation:
             # 调 resume 恢复执行
             with st.spinner("正在执行 SQL..."):
                 resp =requests.post(f"{API_URL}/resume", json={"thread_id": st.session_state.thread_id, "confirmation": "yes"}, timeout=120, headers=HEADERS)
-            # 把结果加到对话历史
             result = resp.json()
-            # 展示结果
+            # 自愈重试可能再次触发 interrupt:返回新 SQL,继续等确认
+            if result.get("interrupted"):
+                st.session_state.pending_sql = result.get("answer", "")
+                st.session_state.awaiting_confirmation = True
+                st.rerun()
+            # 把结果加到对话历史
             text = result.get("text", "")
             chart = result.get("chart")
             st.session_state.messages.append(
